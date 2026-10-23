@@ -34,7 +34,7 @@
 
 #include "../search_unit_data.hpp"
 // #include "../macros.hpp"
-#include "../thirdparty/randutils.hpp"
+#include "thirdparty/randutils.hpp"
 
 namespace ghost
 {

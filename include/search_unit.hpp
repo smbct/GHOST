@@ -902,117 +902,7 @@ namespace ghost
 				int new_value = value_heuristic->select_value( variable_to_change, data, model, delta_errors, min_conflict, rng );
 				
 #if defined GHOST_TRACE && not defined GHOST_FITNESS_CLOUD
-				std::vector<int> candidate_values;
-				std::map<int, double> cumulated_delta_errors;
-				std::vector<double> cumulated_delta_errors_antidote( delta_errors.size() );
-				std::vector<double> cumulated_delta_errors_for_distribution( delta_errors.size() );
-				std::vector<int> cumulated_delta_errors_variable_index_correspondance( delta_errors.size() );
-				int index = 0;
-				
-				for( const auto& deltas : delta_errors )
-				{
-					cumulated_delta_errors[ deltas.first ] = std::accumulate( deltas.second.begin(), deltas.second.end(), 0.0 );
-					cumulated_delta_errors_antidote[ index ] = cumulated_delta_errors[ deltas.first ];
-					cumulated_delta_errors_variable_index_correspondance[ index ] = deltas.first;
-					
-					if( model.permutation_problem )
-					{
-						if( value_heuristic->get_name().compare( "Adaptive Search" ) == 0 )
-						{
-							COUT << "(Adaptive Search Value Heuristic) Error for switching var[" << variable_to_change << "]=" << model.variables[ variable_to_change ].get_value()
-							     << " with var[" << deltas.first << "]=" << model.variables[ deltas.first ].get_value()
-							     << ": " << cumulated_delta_errors[ deltas.first ] << "\n";
-						}
-						else
-							if( value_heuristic->get_name().compare( "Random Walk" ) == 0 )
-							{
-								COUT << "(Random Walk Value Heuristic) Error for switching var[" << variable_to_change << "]=" << model.variables[ variable_to_change ].get_value()
-								     << " with var[" << deltas.first << "]=" << model.variables[ deltas.first ].get_value()
-								     << ": " << cumulated_delta_errors[ deltas.first ] << "\n";
-							}
-							else
-								if( value_heuristic->get_name().compare( "Antidote Search" ) == 0 )
-								{
-									double transformed = cumulated_delta_errors_antidote[ index ] >= 0 ? 0.0 : -cumulated_delta_errors_antidote[ index ];
-									COUT << "(Antidote Search Value Heuristic) Error for switching var[" << variable_to_change << "]=" << model.variables[ variable_to_change ].get_value()
-									     << " with var[" << deltas.first << "]=" << model.variables[ deltas.first ].get_value()
-									     << ": " << cumulated_delta_errors_antidote[ index ] << ", transformed: " << transformed << "\n";
-								}
-					}
-					else
-					{
-						if( value_heuristic->get_name().compare( "Adaptive Search" ) == 0 )
-							COUT << "(Adaptive Search Value Heuristic) Error for the value " << deltas.first << ": " << cumulated_delta_errors[ deltas.first ] << "\n";
-						else
-							if( value_heuristic->get_name().compare( "Random Walk" ) == 0 )
-								COUT << "(Random Walk Value Heuristic) Error for the value " << deltas.first << ": " << cumulated_delta_errors[ deltas.first ] << "\n";
-							else
-								if( value_heuristic->get_name().compare( "Antidote Search" ) == 0 )
-									COUT << "(Antidote Search Value Heuristic) Error for the value " << deltas.first << ": " << cumulated_delta_errors_antidote[ index ] << "\n";
-					}
-					++index;
-				}
-				
-				std::transform( cumulated_delta_errors_antidote.begin(),
-				                cumulated_delta_errors_antidote.end(),
-				                cumulated_delta_errors_for_distribution.begin(),
-				                []( auto delta ){ if( delta >= 0) return 0.0; else return -delta; } );
-
-				auto min_conflict_copy = min_conflict;
-				for( const auto& deltas : cumulated_delta_errors )
-				{
-					// Should not happen, except for Random Walks. min_conflict is supposed to be, well, the min conflict.
-					if( min_conflict_copy > deltas.second )
-					{
-						candidate_values.clear();
-						candidate_values.push_back( deltas.first );
-						min_conflict_copy = deltas.second;
-					}
-					else
-						if( min_conflict_copy == deltas.second )
-							candidate_values.push_back( deltas.first );
-				}
-				
-				if( value_heuristic->get_name().compare( "Adaptive Search" ) == 0 )
-				{
-					COUT << "(Adaptive Search Value Heuristic) Min conflict value candidates list: " << candidate_values[0];
-					for( int i = 1 ; i < static_cast<int>( candidate_values.size() ); ++i )
-						COUT << ", " << candidate_values[i];
-					COUT << "\n";
-				}
-				else
-					if( value_heuristic->get_name().compare( "Random Walk" ) == 0 )
-					{
-						COUT << "(Random Walk Value Heuristic) Min conflict value candidates list: " << candidate_values[0];
-						for( int i = 1 ; i < static_cast<int>( candidate_values.size() ); ++i )
-							COUT << ", " << candidate_values[i];
-						COUT << "\n";
-					}
-					else
-						if( value_heuristic->get_name().compare( "Antidote Search" ) == 0 )
-						{				
-							auto distrib_value = std::discrete_distribution<int>( cumulated_delta_errors_for_distribution.begin(), cumulated_delta_errors_for_distribution.end() );
-							std::vector<int> vec_value( domain_to_explore.size(), 0 );
-							for( int n = 0 ; n < 10000 ; ++n )
-								++vec_value[ rng.variate<int, std::discrete_distribution>( distrib_value ) ];
-							std::vector<std::pair<int,int>> vec_value_pair( domain_to_explore.size() );
-							for( int n = 0 ; n < domain_to_explore.size() ; ++n )
-								vec_value_pair[n] = std::make_pair( cumulated_delta_errors_variable_index_correspondance[n], vec_value[n] );
-							std::sort( vec_value_pair.begin(), vec_value_pair.end(), [&](std::pair<int, int> &a, std::pair<int, int> &b){ return a.second > b.second; } );
-							COUT << "\n(Antidote Search Value Heuristic) Cumulated delta error distribution (normalized):\n";
-							for( int n = 0 ; n < domain_to_explore.size() ; ++n )
-								COUT << "value " <<  vec_value_pair[ n ].first << " => " << std::fixed << std::setprecision(3) << static_cast<double>( vec_value_pair[ n ].second ) / 10000 << "\n";
-						}
-				
-				if( model.permutation_problem )
-					COUT << "\nPicked variable index for min conflict: "
-					     << new_value << "\n"
-					     << "Delta: " << min_conflict << "\n\n";
-				else
-					COUT << "\nPicked value for min conflict: "
-					     << new_value << "\n"
-					     << "Delta: " << min_conflict << "\n\n";
-					
+				ghost_trace_delta(delta_errors, variable_to_change, min_conflict, domain_to_explore, new_value);
 #endif // GHOST_TRACE
 
 #if defined GHOST_RANDOM_WALK
@@ -1112,6 +1002,10 @@ namespace ghost
 #if defined GHOST_TRACE
 								COUT << "Optimization cost improved (" << data.current_opt_cost << " -> " << candidate_opt_cost << "): make local move.\n";
 #endif
+								if(options.verbosity > 0) { // custom log for anytime behaviour
+									COUT << "New best solution: " << candidate_opt_cost << "\n";									
+								}
+
 								local_move( variable_to_change, new_value, min_conflict, delta_errors );
 								data.current_opt_cost = candidate_opt_cost;
 							}
@@ -1210,5 +1104,123 @@ namespace ghost
 			_log_trace.close();
 #endif
 		}
+
+
+
+		inline void ghost_trace_delta(std::map<int, std::vector<double>>& delta_errors, int variable_to_change, double min_conflict, std::vector<int>& domain_to_explore, int new_value) {
+			std::vector<int> candidate_values;
+			std::map<int, double> cumulated_delta_errors;
+			std::vector<double> cumulated_delta_errors_antidote( delta_errors.size() );
+			std::vector<double> cumulated_delta_errors_for_distribution( delta_errors.size() );
+			std::vector<int> cumulated_delta_errors_variable_index_correspondance( delta_errors.size() );
+			int index = 0;
+			
+			for( const auto& deltas : delta_errors )
+			{
+				cumulated_delta_errors[ deltas.first ] = std::accumulate( deltas.second.begin(), deltas.second.end(), 0.0 );
+				cumulated_delta_errors_antidote[ index ] = cumulated_delta_errors[ deltas.first ];
+				cumulated_delta_errors_variable_index_correspondance[ index ] = deltas.first;
+				
+				if( model.permutation_problem )
+				{
+					if( value_heuristic->get_name().compare( "Adaptive Search" ) == 0 )
+					{
+						COUT << "(Adaptive Search Value Heuristic) Error for switching var[" << variable_to_change << "]=" << model.variables[ variable_to_change ].get_value()
+								<< " with var[" << deltas.first << "]=" << model.variables[ deltas.first ].get_value()
+								<< ": " << cumulated_delta_errors[ deltas.first ] << "\n";
+					}
+					else
+						if( value_heuristic->get_name().compare( "Random Walk" ) == 0 )
+						{
+							COUT << "(Random Walk Value Heuristic) Error for switching var[" << variable_to_change << "]=" << model.variables[ variable_to_change ].get_value()
+									<< " with var[" << deltas.first << "]=" << model.variables[ deltas.first ].get_value()
+									<< ": " << cumulated_delta_errors[ deltas.first ] << "\n";
+						}
+						else
+							if( value_heuristic->get_name().compare( "Antidote Search" ) == 0 )
+							{
+								double transformed = cumulated_delta_errors_antidote[ index ] >= 0 ? 0.0 : -cumulated_delta_errors_antidote[ index ];
+								COUT << "(Antidote Search Value Heuristic) Error for switching var[" << variable_to_change << "]=" << model.variables[ variable_to_change ].get_value()
+										<< " with var[" << deltas.first << "]=" << model.variables[ deltas.first ].get_value()
+										<< ": " << cumulated_delta_errors_antidote[ index ] << ", transformed: " << transformed << "\n";
+							}
+				}
+				else
+				{
+					if( value_heuristic->get_name().compare( "Adaptive Search" ) == 0 )
+						COUT << "(Adaptive Search Value Heuristic) Error for the value " << deltas.first << ": " << cumulated_delta_errors[ deltas.first ] << "\n";
+					else
+						if( value_heuristic->get_name().compare( "Random Walk" ) == 0 )
+							COUT << "(Random Walk Value Heuristic) Error for the value " << deltas.first << ": " << cumulated_delta_errors[ deltas.first ] << "\n";
+						else
+							if( value_heuristic->get_name().compare( "Antidote Search" ) == 0 )
+								COUT << "(Antidote Search Value Heuristic) Error for the value " << deltas.first << ": " << cumulated_delta_errors_antidote[ index ] << "\n";
+				}
+				++index;
+			}
+			
+			std::transform( cumulated_delta_errors_antidote.begin(),
+							cumulated_delta_errors_antidote.end(),
+							cumulated_delta_errors_for_distribution.begin(),
+							[]( auto delta ){ if( delta >= 0) return 0.0; else return -delta; } );
+
+			auto min_conflict_copy = min_conflict;
+			for( const auto& deltas : cumulated_delta_errors )
+			{
+				// Should not happen, except for Random Walks. min_conflict is supposed to be, well, the min conflict.
+				if( min_conflict_copy > deltas.second )
+				{
+					candidate_values.clear();
+					candidate_values.push_back( deltas.first );
+					min_conflict_copy = deltas.second;
+				}
+				else
+					if( min_conflict_copy == deltas.second )
+						candidate_values.push_back( deltas.first );
+			}
+			
+			if( value_heuristic->get_name().compare( "Adaptive Search" ) == 0 )
+			{
+				COUT << "(Adaptive Search Value Heuristic) Min conflict value candidates list: " << candidate_values[0];
+				for( int i = 1 ; i < static_cast<int>( candidate_values.size() ); ++i )
+					COUT << ", " << candidate_values[i];
+				COUT << "\n";
+			}
+			else
+				if( value_heuristic->get_name().compare( "Random Walk" ) == 0 )
+				{
+					COUT << "(Random Walk Value Heuristic) Min conflict value candidates list: " << candidate_values[0];
+					for( int i = 1 ; i < static_cast<int>( candidate_values.size() ); ++i )
+						COUT << ", " << candidate_values[i];
+					COUT << "\n";
+				}
+				else
+					if( value_heuristic->get_name().compare( "Antidote Search" ) == 0 )
+					{				
+						auto distrib_value = std::discrete_distribution<int>( cumulated_delta_errors_for_distribution.begin(), cumulated_delta_errors_for_distribution.end() );
+						std::vector<int> vec_value( domain_to_explore.size(), 0 );
+						for( int n = 0 ; n < 10000 ; ++n )
+							++vec_value[ rng.variate<int, std::discrete_distribution>( distrib_value ) ];
+						std::vector<std::pair<int,int>> vec_value_pair( domain_to_explore.size() );
+						for( int n = 0 ; n < domain_to_explore.size() ; ++n )
+							vec_value_pair[n] = std::make_pair( cumulated_delta_errors_variable_index_correspondance[n], vec_value[n] );
+						std::sort( vec_value_pair.begin(), vec_value_pair.end(), [&](std::pair<int, int> &a, std::pair<int, int> &b){ return a.second > b.second; } );
+						COUT << "\n(Antidote Search Value Heuristic) Cumulated delta error distribution (normalized):\n";
+						for( int n = 0 ; n < domain_to_explore.size() ; ++n )
+							COUT << "value " <<  vec_value_pair[ n ].first << " => " << std::fixed << std::setprecision(3) << static_cast<double>( vec_value_pair[ n ].second ) / 10000 << "\n";
+					}
+			
+			if( model.permutation_problem )
+				COUT << "\nPicked variable index for min conflict: "
+						<< new_value << "\n"
+						<< "Delta: " << min_conflict << "\n\n";
+			else
+				COUT << "\nPicked value for min conflict: "
+						<< new_value << "\n"
+						<< "Delta: " << min_conflict << "\n\n";
+		}
+
+
+
 	};
 }
