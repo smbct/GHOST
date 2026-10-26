@@ -64,7 +64,9 @@ Options::Options( const Options& other )
 	  restart_threshold( other.restart_threshold ),
 	  number_variables_to_reset( other.number_variables_to_reset ),
 	  number_start_samplings( other.number_start_samplings ),
-	  seed( other.seed )
+	  seed( other.seed ),
+	  verbosity( other.verbosity ),
+	  log_deltatime( other.log_deltatime )
 { }
 
 Options::Options( Options&& other )
@@ -81,7 +83,9 @@ Options::Options( Options&& other )
 	  restart_threshold( other.restart_threshold ),
 	  number_variables_to_reset( other.number_variables_to_reset ),
 	  number_start_samplings( other.number_start_samplings ),
-	  seed( other.seed )
+	  seed( other.seed ),
+	  verbosity( other.verbosity ),
+	  log_deltatime( other.log_deltatime )
 {	}
 
 Options& Options::operator=( Options other )
@@ -102,6 +106,8 @@ Options& Options::operator=( Options other )
 		number_variables_to_reset = other.number_variables_to_reset;
 		number_start_samplings = other.number_start_samplings;
 		seed = other.seed;
+		verbosity = other.verbosity;
+	  	log_deltatime = other.log_deltatime;
 	}
 
 	return *this;

@@ -84,7 +84,7 @@ namespace ghost
 	/*!
 	 * Solver is the class coding the solver itself.
 	 *
-	 * To solve a problem instance, users must instanciate a Solver object, then run Solver::fast_search.
+	 * To solve a problem instance, users must instantiate a Solver object, then run Solver::fast_search.
 	 * This will search for a good quality solution within a given timeout. If all solutions of a problem
 	 * are required, or if the optimality of the solution must be certified, then users can run 
 	 * Solver::complete_search instead. Notice that this will run a significantly slower search method and
@@ -438,12 +438,21 @@ namespace ghost
 			std::chrono::duration<double,std::micro> elapsed_time( 0 );
 			std::chrono::duration<double,std::micro> timer_postprocess( 0 );
 
+			_options = options;
+
 			/*****************
 			* Initialization *
 			******************/
+			if(_options.verbosity > 0) {
+				COUT << "Start initilization...\n";
+			}
+			
 			_number_variables = _model_builder.fake_building_and_count_variables();
+			
+			if(_options.verbosity > 0) {			
+				COUT << "initilization done!\n";
+			}
 
-			_options = options;
 
 			if( _options.tabu_time_local_min < 0 )
 				_options.tabu_time_local_min = std::max( std::min( 5, static_cast<int>( _number_variables ) - 1 ), static_cast<int>( std::ceil( _number_variables / 5 ) ) ) + 1;

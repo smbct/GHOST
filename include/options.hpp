@@ -59,6 +59,8 @@ namespace ghost
 		unsigned int seed; //!< Seed for the random generator. In parallel runs, the seed for each thread will be seed + thread number. The given seed must be different from 0u, otherwise, another random seed will be used.
 		
 		size_t verbosity; //!< Verbosity level. 0: no log, 1: solution cost when improvement.
+		double log_deltatime; //!< Delta time before two solver log, in seconds.
+
 
 		//! Unique constructor
 		Options();
