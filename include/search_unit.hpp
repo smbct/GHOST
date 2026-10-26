@@ -664,8 +664,6 @@ namespace ghost
 			              std::make_unique<algorithms::ValueHeuristicAdaptiveSearch>(),
 			              std::make_unique<algorithms::ErrorProjectionAdaptiveSearch>() )
 		{ 
-
-			COUT << "test options" << options.verbosity << "\n";
 		}
 		
 		// Check if the thread must stop search
@@ -721,6 +719,8 @@ namespace ghost
 
 			std::chrono::time_point<std::chrono::steady_clock> last_log_time( std::chrono::steady_clock::now() ), last_imp_time( std::chrono::steady_clock::now() );
 
+			double rel_sat_imp = 0.; // percentage of error improvement relatively to the current error
+			size_t imp_flag = false; // true if there improvement since last log
 
 			data.best_sat_error = std::numeric_limits<double>::max();
 			data.best_opt_cost = std::numeric_limits<double>::max();
@@ -741,6 +741,7 @@ namespace ghost
 			int variable_to_change;
 
 			// Custom logging
+			auto initial_sat_error = data.best_sat_error;
 			if(options.verbosity > 0) {
 				COUT << "Initial sat error: " << data.best_sat_error;
 				if(data.is_optimization) {
@@ -761,31 +762,86 @@ namespace ghost
 
 				// custom log for anytime behaviour
 				if(options.verbosity > 0) {
+
+					// reset initial sat error after few iterations
+					if(data.search_iterations == options.n_iter_sat_progress) {
+						initial_sat_error = data.best_sat_error;
+					}
+
 					double elapsed_time_log = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now()-last_log_time).count();
 					if(elapsed_time_log >= options.log_deltatime) {
 						COUT << "[t=";
-						COUT <<  format_value(static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count()/1000.), 7, "s");
+						COUT <<  format_value(static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count()/1000.), 8, 2, "s");
 						COUT <<" it=";
-						COUT << format_value(data.search_iterations, 6);
+						COUT << format_value(data.search_iterations, 0, 6);
 						COUT << "]";
 						if( data.is_optimization) {
 							if(data.best_sat_error <= 1e-4) {
-								COUT << " Current best solution: ";
-								COUT << format_value(data.best_opt_cost, 7);
+								COUT << " Best sol.: ";
+								COUT << "\033[1m";
+								COUT << format_value(data.best_opt_cost, 7, 1);
+								COUT << "\033[0m";
 							} else {
-								COUT << " No solution found so far.";
-								COUT << " Current best candidate: ";
-								COUT << format_value(data.best_sat_error, 7);
+								COUT << " No sol. so far.";
+								COUT << " Best cand.: ";
+								COUT << "\033[1m";
+								COUT << format_value(data.best_sat_error, 7, 1);
+								COUT << "\033[0m";
 							}
 						} else {
-							COUT << " Current best candidate: ";
-							COUT << format_value(data.best_sat_error, 7);
+							COUT << " Best cand.: ";
+							COUT << "\033[1m";
+							COUT << format_value(data.best_sat_error, 7, 1);
+							COUT << "\033[0m";
 						}
 						auto elapsed_time_imp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-last_imp_time).count()/1000.;
 						last_log_time = std::chrono::steady_clock::now();
-						COUT << " Last imp. ";
-						COUT <<  elapsed_time_imp;
-						COUT << "s\n";
+						
+						// constraint satisfaction progression
+						size_t progress = 100-static_cast<size_t>(std::ceil(100.*data.best_sat_error/initial_sat_error));
+						COUT << " Sat progress: ";
+						if(data.search_iterations >= options.n_iter_sat_progress) {
+							if(progress <= 25) {
+								COUT << "\033[31m";
+							} else if(progress <= 50) {
+								COUT << "\033[91m";
+							} else if(progress <= 75) {
+								COUT << "\033[33m";
+							} else {
+								COUT << "\033[32m";
+							}
+							COUT << format_value(progress, 6, 1, "%");
+							COUT << "\033[0m";
+						} else {
+							COUT << format_value(" - ", 6, 1, "%");
+						}
+
+						if(!imp_flag) { // time since last improvement
+							COUT << " Last imp. ";
+							if(elapsed_time_imp <= 1) {
+								COUT << "\033[32m";
+							} else if(elapsed_time_imp <= 10) {
+								COUT << "\033[33m";
+							} else {
+								COUT << "\033[31m";
+							}
+							COUT <<  format_value(elapsed_time_imp, 6, 2, "s");
+							COUT << "\033[0m";
+						}
+
+						if(imp_flag) { // relative improvement percentage
+							COUT << " rel. imp: ";
+							COUT << "\033[1m";
+							COUT << format_value(rel_sat_imp, 6, 1, "%");
+							COUT << "\033[0m";
+						}
+
+						COUT << "\n";
+						COUT << std::flush;
+
+						if(imp_flag) {
+							imp_flag = false;
+						}
 					}
 				}
 				
@@ -961,14 +1017,16 @@ namespace ghost
 #if defined GHOST_TRACE
 					COUT << "Best satisfaction error so far (in an optimization problem). Before: " << data.best_sat_error << ", now: " << data.current_sat_error << "\n";
 #endif
+					if(options.verbosity > 0) {
+						last_imp_time = std::chrono::steady_clock::now();
+						rel_sat_imp = 100*(data.best_sat_error-data.current_sat_error)/data.best_sat_error;
+						imp_flag = true;
+					}
 					data.best_sat_error = data.current_sat_error;
 					std::transform( model.variables.begin(),
 					                model.variables.end(),
 					                final_solution.begin(),
 					                [&](auto& var){ return var.get_value(); } );
-					if(options.verbosity > 0) {
-						last_imp_time = std::chrono::steady_clock::now();
-					}
 				}
 				else
 					if( data.is_optimization && data.current_sat_error == 0.0 && data.best_opt_cost > data.current_opt_cost )
@@ -1122,14 +1180,16 @@ namespace ghost
 #if defined GHOST_TRACE
 					COUT << "Best satisfaction error so far (in an optimization problem). Before: " << data.best_sat_error << ", now: " << data.current_sat_error << "\n";
 #endif
+					if(options.verbosity > 0) {
+						last_imp_time = std::chrono::steady_clock::now();
+						rel_sat_imp = 100*(data.best_sat_error-data.current_sat_error)/data.best_sat_error;
+						imp_flag = true;
+					}
 					data.best_sat_error = data.current_sat_error;
 					std::transform( model.variables.begin(),
 					                model.variables.end(),
 					                final_solution.begin(),
 					                [&](auto& var){ return var.get_value(); } );
-					if(options.verbosity > 0) {
-						last_imp_time = std::chrono::steady_clock::now();
-					}
 				}
 				else {
 					if( data.is_optimization && data.current_sat_error == 0.0 && data.best_opt_cost > data.current_opt_cost )
@@ -1137,14 +1197,14 @@ namespace ghost
 #if defined GHOST_TRACE
 						COUT << "Best objective function value so far. Before: " << data.best_opt_cost << ", now: " << data.current_opt_cost << "\n";
 #endif
+						if(options.verbosity > 0) {
+							last_imp_time = std::chrono::steady_clock::now();
+						}
 						data.best_opt_cost = data.current_opt_cost;
 						std::transform( model.variables.begin(),
 						                model.variables.end(),
 						                final_solution.begin(),
 						                [&](auto& var){ return var.get_value(); } );
-						if(options.verbosity > 0) {
-							last_imp_time = std::chrono::steady_clock::now();
-						}
 					}
 				}
 
@@ -1277,9 +1337,10 @@ namespace ghost
 		}
 
 		template<typename T>
-		inline std::string format_value(T value, size_t length, std::string post = std::string()) {
+		inline std::string format_value(T value, size_t length, size_t precision, std::string post = std::string()) {
 			std::ostringstream oss;
-			oss << value << post;
+			oss.precision(precision);
+			oss << std::fixed << value << post;
 			std::string res = oss.str();
 			if(res.length() < length) {
 				size_t n_iter = length-res.length();

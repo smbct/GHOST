@@ -47,7 +47,10 @@ Options::Options()
 	  restart_threshold( -1 ),
 	  number_variables_to_reset( -1 ),
 	  number_start_samplings( -1 ),
-	  seed( 0u )
+	  seed( 0u ),
+	  verbosity( 0 ),
+	  log_deltatime( 1 ),
+	  n_iter_sat_progress( 1000 )
 { }
 
 Options::Options( const Options& other )
@@ -66,7 +69,8 @@ Options::Options( const Options& other )
 	  number_start_samplings( other.number_start_samplings ),
 	  seed( other.seed ),
 	  verbosity( other.verbosity ),
-	  log_deltatime( other.log_deltatime )
+	  log_deltatime( other.log_deltatime ),
+	  n_iter_sat_progress( other.n_iter_sat_progress )
 { }
 
 Options::Options( Options&& other )
@@ -85,7 +89,8 @@ Options::Options( Options&& other )
 	  number_start_samplings( other.number_start_samplings ),
 	  seed( other.seed ),
 	  verbosity( other.verbosity ),
-	  log_deltatime( other.log_deltatime )
+	  log_deltatime( other.log_deltatime ),
+	  n_iter_sat_progress( other.n_iter_sat_progress )
 {	}
 
 Options& Options::operator=( Options other )
@@ -108,6 +113,7 @@ Options& Options::operator=( Options other )
 		seed = other.seed;
 		verbosity = other.verbosity;
 	  	log_deltatime = other.log_deltatime;
+		n_iter_sat_progress = other.n_iter_sat_progress;
 	}
 
 	return *this;
