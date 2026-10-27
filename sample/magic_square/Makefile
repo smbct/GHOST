@@ -9,7 +9,7 @@ CXXFIRSTFLAGSASAN= -g -O0 -DDEBUG -W -Wall -Wextra -Wno-sign-compare -Wno-unused
 CXXFIRSTFLAGSINFO= -g -O2 -W -Wall -Wextra -Wno-sign-compare -Wno-unused-parameter -Wno-use-after-free
 
 # Development version
-GHOST_DIR=/home/sbuchet/dev/ghost_test/GHOST
+GHOST_DIR=../../
 GHOST_LIB=$(GHOST_DIR)/build
 GHOST_INCLUDE=$(GHOST_DIR)/build/include
 
