@@ -779,19 +779,19 @@ namespace ghost
 							if(data.best_sat_error <= 1e-4) {
 								COUT << " Best sol.: ";
 								COUT << "\033[1m";
-								COUT << format_value(data.best_opt_cost, 7, 1);
+								COUT << format_value(data.best_opt_cost, 7, 4);
 								COUT << "\033[0m";
 							} else {
 								COUT << " No sol. so far.";
 								COUT << " Best cand.: ";
 								COUT << "\033[1m";
-								COUT << format_value(data.best_sat_error, 7, 1);
+								COUT << format_value(data.best_sat_error+options.log_error_shift, 7, 4);
 								COUT << "\033[0m";
 							}
 						} else {
 							COUT << " Best cand.: ";
 							COUT << "\033[1m";
-							COUT << format_value(data.best_sat_error, 7, 1);
+							COUT << format_value(data.best_sat_error+options.log_error_shift, 7, 4);
 							COUT << "\033[0m";
 						}
 						auto elapsed_time_imp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-last_imp_time).count()/1000.;

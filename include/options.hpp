@@ -61,6 +61,7 @@ namespace ghost
 		size_t verbosity; //!< Verbosity level. 0: no log, 1: solution cost when improvement.
 		double log_deltatime; //!< Delta time before two solver log, in seconds.
 		size_t n_iter_sat_progress; //!< N iterations before computing the satisfaction progress
+		double log_error_shift; //!< shift value on the cost error for negative values 
 
 
 		//! Unique constructor

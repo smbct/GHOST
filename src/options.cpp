@@ -50,7 +50,8 @@ Options::Options()
 	  seed( 0u ),
 	  verbosity( 0 ),
 	  log_deltatime( 1 ),
-	  n_iter_sat_progress( 1000 )
+	  n_iter_sat_progress( 1000 ),
+	  log_error_shift( 0 )
 { }
 
 Options::Options( const Options& other )
@@ -70,7 +71,8 @@ Options::Options( const Options& other )
 	  seed( other.seed ),
 	  verbosity( other.verbosity ),
 	  log_deltatime( other.log_deltatime ),
-	  n_iter_sat_progress( other.n_iter_sat_progress )
+	  n_iter_sat_progress( other.n_iter_sat_progress ),
+	  log_error_shift( other.log_error_shift )
 { }
 
 Options::Options( Options&& other )
@@ -90,7 +92,8 @@ Options::Options( Options&& other )
 	  seed( other.seed ),
 	  verbosity( other.verbosity ),
 	  log_deltatime( other.log_deltatime ),
-	  n_iter_sat_progress( other.n_iter_sat_progress )
+	  n_iter_sat_progress( other.n_iter_sat_progress ),
+	  log_error_shift( log_error_shift )
 {	}
 
 Options& Options::operator=( Options other )
@@ -114,6 +117,7 @@ Options& Options::operator=( Options other )
 		verbosity = other.verbosity;
 	  	log_deltatime = other.log_deltatime;
 		n_iter_sat_progress = other.n_iter_sat_progress;
+		log_error_shift = other.log_error_shift;
 	}
 
 	return *this;
