@@ -62,7 +62,7 @@ namespace ghost
 		double log_deltatime; //!< Delta time before two solver log, in seconds.
 		size_t n_iter_sat_progress; //!< N iterations before computing the satisfaction progress
 		double log_error_shift; //!< shift value on the cost error for negative values 
-
+		bool log_coloring; //!< wether adding colors or not in the logging output
 
 		//! Unique constructor
 		Options();

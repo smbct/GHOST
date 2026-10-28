@@ -725,8 +725,6 @@ namespace ghost
 			data.best_sat_error = std::numeric_limits<double>::max();
 			data.best_opt_cost = std::numeric_limits<double>::max();
 
-			COUT << "before initialization" << std::endl;
-
 			initialize_variable_values();
 			initialize_data_structures();
 
@@ -778,21 +776,33 @@ namespace ghost
 						if( data.is_optimization) {
 							if(data.best_sat_error <= 1e-4) {
 								COUT << " Best sol.: ";
-								COUT << "\033[1m";
+								if(options.log_coloring) {
+									COUT << "\033[1m";
+								}
 								COUT << format_value(data.best_opt_cost, 7, 4);
-								COUT << "\033[0m";
+								if(options.log_coloring) {
+									COUT << "\033[0m";
+								}
 							} else {
 								COUT << " No sol. so far.";
 								COUT << " Best cand.: ";
-								COUT << "\033[1m";
+								if(options.log_coloring) {
+									COUT << "\033[1m";
+								}
 								COUT << format_value(data.best_sat_error+options.log_error_shift, 7, 4);
-								COUT << "\033[0m";
+								if(options.log_coloring) {
+									COUT << "\033[0m";
+								}
 							}
 						} else {
 							COUT << " Best cand.: ";
-							COUT << "\033[1m";
+							if(options.log_coloring) {
+								COUT << "\033[1m";
+							}
 							COUT << format_value(data.best_sat_error+options.log_error_shift, 7, 4);
-							COUT << "\033[0m";
+							if(options.log_coloring) {
+								COUT << "\033[0m";
+							}
 						}
 						auto elapsed_time_imp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-last_imp_time).count()/1000.;
 						last_log_time = std::chrono::steady_clock::now();
@@ -801,39 +811,51 @@ namespace ghost
 						size_t progress = 100-static_cast<size_t>(std::ceil(100.*data.best_sat_error/initial_sat_error));
 						COUT << " Sat progress: ";
 						if(data.search_iterations >= options.n_iter_sat_progress) {
-							if(progress <= 25) {
-								COUT << "\033[31m";
-							} else if(progress <= 50) {
-								COUT << "\033[91m";
-							} else if(progress <= 75) {
-								COUT << "\033[33m";
-							} else {
-								COUT << "\033[32m";
+							if(options.log_coloring) {
+								if(progress <= 25) {
+									COUT << "\033[31m";
+								} else if(progress <= 50) {
+									COUT << "\033[91m";
+								} else if(progress <= 75) {
+									COUT << "\033[33m";
+								} else {
+									COUT << "\033[32m";
+								}
 							}
 							COUT << format_value(progress, 6, 1, "%");
-							COUT << "\033[0m";
+							if(options.log_coloring) {
+								COUT << "\033[0m";
+							}
 						} else {
 							COUT << format_value(" - ", 6, 1, "%");
 						}
 
 						if(!imp_flag) { // time since last improvement
 							COUT << " Last imp. ";
-							if(elapsed_time_imp <= 1) {
-								COUT << "\033[32m";
-							} else if(elapsed_time_imp <= 10) {
-								COUT << "\033[33m";
-							} else {
-								COUT << "\033[31m";
+							if(options.log_coloring) {
+								if(elapsed_time_imp <= 1) {
+									COUT << "\033[32m";
+								} else if(elapsed_time_imp <= 10) {
+									COUT << "\033[33m";
+								} else {
+									COUT << "\033[31m";
+								}
 							}
 							COUT <<  format_value(elapsed_time_imp, 6, 2, "s");
-							COUT << "\033[0m";
+							if(options.log_coloring) {
+								COUT << "\033[0m";
+							}
 						}
 
 						if(imp_flag) { // relative improvement percentage
 							COUT << " rel. imp: ";
-							COUT << "\033[1m";
+							if(options.log_coloring) {
+								COUT << "\033[1m";
+							}
 							COUT << format_value(rel_sat_imp, 6, 1, "%");
-							COUT << "\033[0m";
+							if(options.log_coloring) {
+								COUT << "\033[0m";
+							}
 						}
 
 						COUT << "\n";

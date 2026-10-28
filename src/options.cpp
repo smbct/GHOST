@@ -51,7 +51,8 @@ Options::Options()
 	  verbosity( 0 ),
 	  log_deltatime( 1 ),
 	  n_iter_sat_progress( 1000 ),
-	  log_error_shift( 0 )
+	  log_error_shift( 0 ),
+	  log_coloring( false )
 { }
 
 Options::Options( const Options& other )
@@ -72,7 +73,8 @@ Options::Options( const Options& other )
 	  verbosity( other.verbosity ),
 	  log_deltatime( other.log_deltatime ),
 	  n_iter_sat_progress( other.n_iter_sat_progress ),
-	  log_error_shift( other.log_error_shift )
+	  log_error_shift( other.log_error_shift ),
+	  log_coloring( other.log_coloring )
 { }
 
 Options::Options( Options&& other )
@@ -93,7 +95,8 @@ Options::Options( Options&& other )
 	  verbosity( other.verbosity ),
 	  log_deltatime( other.log_deltatime ),
 	  n_iter_sat_progress( other.n_iter_sat_progress ),
-	  log_error_shift( log_error_shift )
+	  log_error_shift( other.log_error_shift ),
+	  log_coloring( other.log_coloring )
 {	}
 
 Options& Options::operator=( Options other )
@@ -118,6 +121,7 @@ Options& Options::operator=( Options other )
 	  	log_deltatime = other.log_deltatime;
 		n_iter_sat_progress = other.n_iter_sat_progress;
 		log_error_shift = other.log_error_shift;
+		log_coloring = other.log_coloring;
 	}
 
 	return *this;
